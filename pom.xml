@@ -15,10 +15,19 @@
     </properties>
 
     <dependencies>
+        <!-- Первая зависимость (основная) -->
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots-longpolling</artifactId>
             <version>7.11.0</version>
         </dependency>
+
+        <!-- Вторая зависимость (для OkHttpTelegramClient) -->
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots-client</artifactId>
+            <version>7.11.0</version>
+        </dependency>
     </dependencies>
+
 </project>
