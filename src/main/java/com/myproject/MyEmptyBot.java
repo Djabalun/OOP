@@ -7,51 +7,45 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MyEmptyBot implements LongPollingSingleThreadUpdateConsumer {
 
     private final TelegramClient telegramClient;
+    
+    private final Map<String, BotCommand> commands = new HashMap<>();
 
     public MyEmptyBot(String botToken) {
         this.telegramClient = new OkHttpTelegramClient(botToken);
+        
+        commands.put("/authors", new authorscom());
+        commands.put("/about", new aboutcom());
+        commands.put("/help", new helpcom(commands));
     }
 
     @Override
     public void consume(Update update) {
-
         if (update.hasMessage() && update.getMessage().hasText()) {
-            
-            String messageText = update.getMessage().getText(); // Текст от пользователя
-            long chatId = update.getMessage().getChatId();       // ID чата, куда слать ответ
+            String messageText = update.getMessage().getText().trim();
+            long chatId = update.getMessage().getChatId();
 
-            String replyText;
+            String[] parts = messageText.split("\\s+");
+            String commandName = parts[0];
 
-            switch (messageText) {
-                case "/authors":
-                    replyText = "Dan & Van";
-                    break;
-                    
-                case "/about":
-                    replyText = "Этот бот создан для конвертации файлов.";
-                    break;
-                    
-                case "/help":
-                    replyText = "Доступные команды:\n" +
-                                "/authors - узнать авторов бота\n" +
-                                "/about - назначение бота\n" +
-                                "/help - показать это меню";
-                    break;
-                    
-                default:
-                    replyText = "Неизвестная команда. Воспользуйтесь командой '/help', чтобы узнать возможности бота";
-                    break;
+            String[] args = new String[parts.length - 1];
+            System.arraycopy(parts, 1, args, 0, args.length);
+
+            BotCommand command = commands.get(commandName);
+
+            if (command != null) {
+                command.execute(chatId, telegramClient, args);
+            } else {
+                sendNotification(chatId, "Неизвестная команда. Воспользуйтесь командой '/help', чтобы узнать возможности бота");
             }
-
-            // Отправляем сформированный текст пользователю
-            sendNotification(chatId, replyText);
         }
     }
 
-    // Вспомогательный метод для отправки сообщений
     private void sendNotification(long chatId, String text) {
         SendMessage message = SendMessage.builder()
                 .chatId(chatId)
